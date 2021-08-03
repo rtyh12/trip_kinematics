@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
         gimbal_joint.pass_arguments_g([tip])
         extend_motor.set_actuated_state([{'LL_revolute_joint_ry': tip['ry']}])
-        gimbal_joint.set_actuated_state(['t1':tip['t1'], 't2':tip['t2']])
+        gimbal_joint.set_actuated_state([{'t1': tip['t1'], 't2':tip['t2']}])
 
         row = inverse_kinematics(
             triped_leg, [input_x[i], input_y[i], input_z[i]])
