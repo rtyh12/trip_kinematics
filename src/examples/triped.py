@@ -41,7 +41,7 @@ def p1(theta):
         tx=0.139807669447128, ty=0.0549998406976098, tz=-0.051)
 
     A_CCS_lsm_rot = TransformationMatrix(
-        rz=radians(-338.5255), conv='xyz')  # radians()34.875251275010434
+        rz=radians(-338.5255), conv='xyz')  
 
     A_CCS_lsm = A_CCS_lsm_tran * A_CCS_lsm_rot
 
@@ -86,7 +86,7 @@ def p2(theta):
 
 def swing_to_gimbal(state: Dict[str, float], tips: Dict[str, float] = None):
 
-    r = 0.11
+    r = float(0.11)
 
     theta_left = state['swing_left']
     theta_right = state['swing_right']
@@ -101,17 +101,16 @@ def swing_to_gimbal(state: Dict[str, float], tips: Dict[str, float] = None):
 
     def closing_equation(x):
         c1, c2 = c(rx=x[0], ry=x[1], rz=x[2])
-        closing_eq = ((c1-p1(theta_right)).T @ (c1-p1(theta_right)) -
-                            r**2)**2+((c2-p2(theta_left)).T @ (c2-p2(theta_left)) - r**2)**2
+        closing_eq= (sum((c1-p1(theta_right))**2) - r**2)**2+ (sum((c2-p2(theta_left))**2) - r**2)**2 
         return closing_eq
 
-    sol = minimize(closing_equation,x_0)
+    sol = minimize(closing_equation,x_0,method="Nelder-Mead")
     return {'gimbal_joint': {'rx': sol.x[0], 'ry': sol.x[1], 'rz': sol.x[2]}}
 
 
 def gimbal_to_swing(state: Dict[str,Dict[str, float]], tips: Dict[str, float] = None):
 
-    r = 0.11
+    r = float(0.11)
 
     gimbal_x = state['gimbal_joint']['rx']
     gimbal_y = state['gimbal_joint']['ry']
@@ -126,11 +125,10 @@ def gimbal_to_swing(state: Dict[str,Dict[str, float]], tips: Dict[str, float] = 
 
     def closing_equation(x):
         c1, c2 = c(rx=gimbal_x, ry=gimbal_y, rz=gimbal_z)
-        closing_eq= ((c1-p1(x[1])).T @ (c1-p1(x[1])) -
-                            r**2)**2+((c2-p2(x[0])).T @ (c2-p2(x[0])) - r**2)**2
+        closing_eq= (sum((c1-p1(x[1]))**2)- r**2)**2 + (sum((c2-p2(x[0]))**2)- r**2)**2  
         return closing_eq
 
-    sol = minimize(closing_equation,x_0)
+    sol = minimize(closing_equation,x_0,method="Nelder-Mead")
     return {'swing_left': sol.x[0], 'swing_right': sol.x[1]}
 
 

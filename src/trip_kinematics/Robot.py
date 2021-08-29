@@ -213,6 +213,7 @@ def inverse_kinematics(robot: Robot, end_effector_position):
             state_keys.append([keys,inner_keys])
 
     numeric_forward_kinematics = lambdify([symbols],matrix.matrix[: 3, 3])
+
     # position only inverse kinematics
     def objective_function(x):    
         translation = numeric_forward_kinematics(x)
@@ -221,10 +222,10 @@ def inverse_kinematics(robot: Robot, end_effector_position):
                     (translation[2] - end_effector_position[2])**2)
         return equation
  
-    sol = minimize(objective_function,x_0)
+    sol = minimize(objective_function,x_0,tol=0.01)
 
 
-    solved_states = {} #robot.solver_to_virtual_state(sol,states_to_solve_for)
+    solved_states = {}
     for i in range(len(x_0)):
         if state_keys[i][0] not in solved_states.keys():
             solved_states[state_keys[i][0]] = {}
