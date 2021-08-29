@@ -1,6 +1,8 @@
 from typing import Dict, List, Callable, Union
 from trip_kinematics.HomogenTransformationMatrix import TransformationMatrix
-from casadi import Opti
+from copy import deepcopy
+from scipy.optimize import minimize
+from sympy import lambdify
 from trip_kinematics.KinematicGroup import KinematicGroup
 
 
@@ -107,7 +109,7 @@ class Robot:
         return virtual_state
 
 
-    def get_symbolic_rep(self,opti_obj,endeffector):
+    def get_symbolic_rep(self):
         """This Function returnes a symbolic representation of the virtual chain.
 
 
@@ -127,22 +129,14 @@ class Robot:
 
             for virtual_key in virtual_trafo.keys():
                 virtual_transformation = virtual_trafo[virtual_key]
-                state = virtual_transformation.state
-
                 
-                for key in state.keys():
-
-                    start_value = state[key]
-                    state[key] = opti_obj.variable()
-                    opti_obj.set_initial(state[key], start_value)
-
+                state = virtual_transformation.get_symbolic_state()
                 if state != {}:
+                    virtual_transformation.set_state(state)
                     symbolic_state[virtual_key]=state
 
                 hmt = virtual_transformation.get_transformation_matrix()
                 matrix = matrix * hmt
-
-
 
         return matrix, symbolic_state
 
@@ -200,28 +194,42 @@ def inverse_kinematics(robot: Robot, end_effector_position):
     Returns:
         Dict[str, float]: combined actuated state of all :py:class`KinematicGroup` objects.
     """
+    # to preserve the state of the true robot model
+    robot_copy = deepcopy(robot)
 
-    opti = Opti()
-    matrix, states_to_solve_for = robot.get_symbolic_rep(opti,"placeholder_endeffector")
+    matrix, symbolic_state_dict = robot_copy.get_symbolic_rep()
+    initial_state               = robot.get_virtual_state()
+
+    x_0 = []
+    state_keys = []
+    symbols = []
+    for keys in initial_state.keys():
+        inner_dictionary = initial_state[keys]
+        inner_symbol = symbolic_state_dict[keys]
+        for inner_keys in inner_dictionary.keys():
+            x_0.append(inner_dictionary[inner_keys])
+            symbols.append(inner_symbol[inner_keys])
+            state_keys.append([keys,inner_keys])
+
+    print("x_0",x_0)
+ 
 
     # position only inverse kinematics
-    translation = matrix.get_translation()
-    equation = ((translation[0] - end_effector_position[0])**2 + 
-                (translation[1] - end_effector_position[1])**2 + 
-                (translation[2] - end_effector_position[2])**2)
+    def objective_function(x):        
+        numeric_forward_kinematics = lambdify(symbols,matrix)
+        translation = matrix.numeric_forward_kinematics(x)[: 3, 3]
+        print(translation)
+        equation = ((translation[0] - end_effector_position[0])**2 + 
+                    (translation[1] - end_effector_position[1])**2 + 
+                    (translation[2] - end_effector_position[2])**2)
+        return equation
+ 
+    sol = minimize(objective_function,x_0)
 
 
-    opti.minimize(equation)
-    p_opts = {"print_time": False}
-    s_opts = {"print_level": 0, "print_timing_statistics": "no"}
-
-
-    opti.solver('ipopt', p_opts, s_opts)
-    sol = opti.solve()
-
-    #print(robot.get_virtual_state())
-
-    solved_states = robot.solver_to_virtual_state(sol,states_to_solve_for)
+    solved_states = {} #robot.solver_to_virtual_state(sol,states_to_solve_for)
+    for i in range(x_0):
+        solved_states[state_keys[i][0]][state_keys[i][1]]=sol.x[i]
     robot.set_virtual_state(solved_states)
     actuated_state = robot.get_actuated_state()
     return actuated_state
