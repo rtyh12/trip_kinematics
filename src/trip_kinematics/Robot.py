@@ -116,7 +116,7 @@ class Robot:
         Returns:
             TransformationMatrix: The :py:class:`TransformationMatrix` containing symbolic objects
         """
-        matrix = TransformationMatrix()
+        transformation = TransformationMatrix()
 
         symbolic_state = {}
 
@@ -136,12 +136,12 @@ class Robot:
                     symbolic_state[virtual_key]=state
 
                 hmt = virtual_transformation.get_transformation_matrix()
-                matrix = matrix * hmt
+                transformation = transformation * hmt
 
-        return matrix, symbolic_state
+        return transformation.matrix, symbolic_state
 
     @staticmethod
-    def solver_to_virtual_state(sol,symbolic_state):
+    def solver_to_virtual_mapping(sol,symbolic_state):
         """This Function maps the solution of a opti solver to the virtual state of the robot
 
         Args:
@@ -212,7 +212,7 @@ def inverse_kinematics(robot: Robot, end_effector_position):
             symbols.append(inner_symbol[inner_keys])
             state_keys.append([keys,inner_keys])
 
-    numeric_forward_kinematics = lambdify([symbols],matrix.matrix[: 3, 3])
+    numeric_forward_kinematics = lambdify([symbols],matrix[: 3, 3])
 
     # position only inverse kinematics
     def objective_function(x):    

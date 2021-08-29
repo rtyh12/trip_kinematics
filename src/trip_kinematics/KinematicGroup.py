@@ -335,8 +335,8 @@ class KinematicGroup():
 
         if KinematicGroup.object_list_to_key_lists(self.__virtual_state) == KinematicGroup.object_list_to_key_lists(state):
             for key in state.keys():
+                self.__virtual_transformations[key].set_state(state[key])
                 self.__virtual_state[key] = state[key]
-            self.__update_chain()
             self.__actuated_state = self.__virtual_to_actuated(self.__virtual_state)  
         else:
             raise ValueError(
@@ -409,7 +409,7 @@ class KinematicGroup():
         """propagates changes from the :py:attr:`__virtual_state` to the underlying :py:class:`Transformation` objects.
         """
         for key in self.__virtual_state.keys():
-            self.__virtual_transformations[key].state = self.__virtual_state[key]
+            self.__virtual_transformations[key].set_state(self.__virtual_state[key])
 
     def __add_child(self, child):
         self.__child = child
