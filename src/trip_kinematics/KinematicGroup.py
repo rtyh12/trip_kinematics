@@ -1,6 +1,7 @@
 from typing import Dict, List, Callable, Union
 from trip_kinematics.HomogenTransformationMatrix import TransformationMatrix
 from copy import deepcopy
+import sympy as sp
 
 
 def array_find(arr, obj) -> int:
@@ -170,6 +171,13 @@ class Transformation():
         if self.convention == 'quaternion':
             return TransformationMatrix(qw=qw, qx=qx, qy=qy, qz=qz, conv='quat', tx=tx, ty=ty, tz=tz)
         raise RuntimeError("No Convention. This should normally be catched during initialization. Did you retroactively change the keys of the Transformation state?")
+    
+    def get_symbolic_state(self):
+        symbolic_state = {}
+        for key in self.state.keys():
+            symbol_name = key+"_{"+self.__name+"}"
+            symbolic_state[key] = sp.symbols(symbol_name)
+        return symbolic_state
 
 
 class KinematicGroup():

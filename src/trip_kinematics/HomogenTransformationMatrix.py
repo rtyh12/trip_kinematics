@@ -1,5 +1,5 @@
 import numpy as np
-from casadi import MX, cos, sin
+from sympy import  cos, sin
 
 
 def quat_rotation_matrix(qw, qx, qy, qz) -> np.ndarray:
