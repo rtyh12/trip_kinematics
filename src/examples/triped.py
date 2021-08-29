@@ -104,7 +104,7 @@ def swing_to_gimbal(state: Dict[str, float], tips: Dict[str, float] = None):
         closing_eq= (sum((c1-p1(theta_right))**2) - r**2)**2+ (sum((c2-p2(theta_left))**2) - r**2)**2 
         return closing_eq
 
-    sol = minimize(closing_equation,x_0,method="Nelder-Mead")
+    sol = minimize(closing_equation,x_0,method='L-BFGS-B')
     return {'gimbal_joint': {'rx': sol.x[0], 'ry': sol.x[1], 'rz': sol.x[2]}}
 
 
@@ -128,7 +128,7 @@ def gimbal_to_swing(state: Dict[str,Dict[str, float]], tips: Dict[str, float] = 
         closing_eq= (sum((c1-p1(x[1]))**2)- r**2)**2 + (sum((c2-p2(x[0]))**2)- r**2)**2  
         return closing_eq
 
-    sol = minimize(closing_equation,x_0,method="Nelder-Mead")
+    sol = minimize(closing_equation,x_0,method='L-BFGS-B')
     return {'swing_left': sol.x[0], 'swing_right': sol.x[1]}
 
 
