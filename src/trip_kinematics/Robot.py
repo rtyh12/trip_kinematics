@@ -200,6 +200,7 @@ def inverse_kinematics(robot: Robot, end_effector_position):
     matrix, symbolic_state_dict = robot_copy.get_symbolic_rep()
     initial_state               = robot.get_virtual_state()
 
+    # set up function input from state dictionaries
     x_0 = []
     state_keys = []
     symbols = []
@@ -211,14 +212,10 @@ def inverse_kinematics(robot: Robot, end_effector_position):
             symbols.append(inner_symbol[inner_keys])
             state_keys.append([keys,inner_keys])
 
-    print("x_0",x_0)
- 
-
+    numeric_forward_kinematics = lambdify([symbols],matrix.matrix[: 3, 3])
     # position only inverse kinematics
-    def objective_function(x):        
-        numeric_forward_kinematics = lambdify(symbols,matrix)
-        translation = matrix.numeric_forward_kinematics(x)[: 3, 3]
-        print(translation)
+    def objective_function(x):    
+        translation = numeric_forward_kinematics(x)
         equation = ((translation[0] - end_effector_position[0])**2 + 
                     (translation[1] - end_effector_position[1])**2 + 
                     (translation[2] - end_effector_position[2])**2)
@@ -228,7 +225,9 @@ def inverse_kinematics(robot: Robot, end_effector_position):
 
 
     solved_states = {} #robot.solver_to_virtual_state(sol,states_to_solve_for)
-    for i in range(x_0):
+    for i in range(len(x_0)):
+        if state_keys[i][0] not in solved_states.keys():
+            solved_states[state_keys[i][0]] = {}
         solved_states[state_keys[i][0]][state_keys[i][1]]=sol.x[i]
     robot.set_virtual_state(solved_states)
     actuated_state = robot.get_actuated_state()
