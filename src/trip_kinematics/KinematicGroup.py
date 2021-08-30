@@ -413,6 +413,22 @@ class KinematicGroup():
     def get_virtual_transformations(self):
         return deepcopy(self.__virtual_transformations)
 
+    def get_symbolic_rep(self):
+        transformation = TransformationMatrix().matrix
+        symbolic_state = {}
+        virtual_trafo = self.get_virtual_transformations()
+        for virtual_key in virtual_trafo.keys():
+            virtual_transformation = virtual_trafo[virtual_key]
+                
+            hmt, state = virtual_transformation.get_symbolic_rep()
+            if state != {}:
+                virtual_transformation.set_state(state)
+                symbolic_state[virtual_key]=state
+
+            transformation = transformation @ hmt
+        return transformation, symbolic_state
+
+
     def __update_chain(self):
         """propagates changes from the :py:attr:`__virtual_state` to the underlying :py:class:`Transformation` objects.
         """

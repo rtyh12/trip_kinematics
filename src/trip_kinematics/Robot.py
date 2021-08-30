@@ -124,19 +124,10 @@ class Robot:
         
         for group_key in groups.keys():
             group         = groups[group_key]
-            virtual_trafo = group.get_virtual_transformations()
+            hmt, symbols  = group.get_virtual_transformations()
 
-
-            for virtual_key in virtual_trafo.keys():
-                virtual_transformation = virtual_trafo[virtual_key]
-                
-                hmt, state = virtual_transformation.get_symbolic_rep()
-                if state != {}:
-                    virtual_transformation.set_state(state)
-                    symbolic_state[virtual_key]=state
-
-
-                transformation = transformation @ hmt
+            symbolic_state.update(symbols)
+            transformation = transformation @ hmt
 
         return transformation, symbolic_state
 
