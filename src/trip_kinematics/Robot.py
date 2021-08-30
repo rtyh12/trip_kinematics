@@ -1,8 +1,10 @@
 from typing import Dict, List, Callable, Union
+
+from scipy.optimize.nonlin import Jacobian
 from trip_kinematics.HomogenTransformationMatrix import TransformationMatrix
 from copy import deepcopy
 from scipy.optimize import minimize
-from sympy import lambdify
+from sympy import lambdify, Matrix
 from trip_kinematics.KinematicGroup import KinematicGroup
 
 
@@ -203,17 +205,17 @@ def inverse_kinematics(robot: Robot, end_effector_position):
             symbols.append(inner_symbol[inner_keys])
             state_keys.append([keys,inner_keys])
 
-    numeric_forward_kinematics = lambdify([symbols],matrix[: 3, 3])
 
-    # position only inverse kinematics
-    def objective_function(x):    
-        translation = numeric_forward_kinematics(x)
-        equation = ((translation[0] - end_effector_position[0])**2 + 
-                    (translation[1] - end_effector_position[1])**2 + 
-                    (translation[2] - end_effector_position[2])**2)
-        return equation
- 
-    sol = minimize(objective_function,x_0,tol=0.01)
+    objective = ((matrix[0,3]- end_effector_position[0])**2 + 
+                 (matrix[1,3]- end_effector_position[1])**2 +
+                 (matrix[2,3]- end_effector_position[1])**2)
+
+    gradient = lambdify([symbols],Matrix([objective]).jacobian(symbols))
+    def jacobi_mat(x):
+        return gradient(x)[0]             
+    objective_function = lambdify([symbols],objective)
+
+    sol = minimize(objective_function,x_0,tol=0.01,jac=jacobi_mat,method='L-BFGS-B')
 
 
     solved_states = {}
