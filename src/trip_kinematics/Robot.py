@@ -4,7 +4,7 @@ from scipy.optimize.nonlin import Jacobian
 from trip_kinematics.HomogenTransformationMatrix import TransformationMatrix
 from copy import deepcopy
 from scipy.optimize import minimize
-from sympy import lambdify, Matrix
+from sympy import lambdify, Matrix, hessian
 from trip_kinematics.KinematicGroup import KinematicGroup
 
 
@@ -213,9 +213,11 @@ def inverse_kinematics(robot: Robot, end_effector_position):
     gradient = lambdify([symbols],Matrix([objective]).jacobian(symbols))
     def jacobi_mat(x):
         return gradient(x)[0]             
+    hessi_mat = lambdify([symbols],hessian(objective,symbols))
+
     objective_function = lambdify([symbols],objective)
 
-    sol = minimize(objective_function,x_0,tol=0.01,jac=jacobi_mat,method='L-BFGS-B')
+    sol = minimize(objective_function,x_0,tol=0.01,jac=jacobi_mat,hess=hessi_mat,method='Newton-CG')
 
 
     solved_states = {}
