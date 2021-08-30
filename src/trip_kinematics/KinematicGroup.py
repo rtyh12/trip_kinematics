@@ -12,6 +12,11 @@ def array_find(arr, obj) -> int:
     except:
         return -1
 
+def merge_dict(dict1, dict2):
+    new_dict = deepcopy(dict2)
+    new_dict.update(dict1)
+    return new_dict
+
 
 class Transformation():
     """Initializes the :py:class:`Transformation` class. 
@@ -172,12 +177,15 @@ class Transformation():
             return TransformationMatrix(qw=qw, qx=qx, qy=qy, qz=qz, conv='quat', tx=tx, ty=ty, tz=tz)
         raise RuntimeError("No Convention. This should normally be catched during initialization. Did you retroactively change the keys of the Transformation state?")
     
-    def get_symbolic_state(self):
+    def get_symbolic_rep(self):
         symbolic_state = {}
         for key in self.state.keys():
             symbol_name = key+"_{"+self.__name+"}"
             symbolic_state[key] = sp.symbols(symbol_name)
-        return symbolic_state
+        
+        new_values = merge_dict(self.constants,symbolic_state)
+        new_trafo = Transformation(self.__name,new_values,list(symbolic_state.keys()))
+        return new_trafo.get_transformation_matrix().matrix,  symbolic_state
 
 
 class KinematicGroup():

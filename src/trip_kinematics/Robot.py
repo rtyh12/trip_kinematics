@@ -116,7 +116,7 @@ class Robot:
         Returns:
             TransformationMatrix: The :py:class:`TransformationMatrix` containing symbolic objects
         """
-        transformation = TransformationMatrix()
+        transformation = TransformationMatrix().matrix
 
         symbolic_state = {}
 
@@ -130,15 +130,15 @@ class Robot:
             for virtual_key in virtual_trafo.keys():
                 virtual_transformation = virtual_trafo[virtual_key]
                 
-                state = virtual_transformation.get_symbolic_state()
+                hmt, state = virtual_transformation.get_symbolic_rep()
                 if state != {}:
                     virtual_transformation.set_state(state)
                     symbolic_state[virtual_key]=state
 
-                hmt = virtual_transformation.get_transformation_matrix()
-                transformation = transformation * hmt
 
-        return transformation.matrix, symbolic_state
+                transformation = transformation @ hmt
+
+        return transformation, symbolic_state
 
     @staticmethod
     def solver_to_virtual_mapping(sol,symbolic_state):
